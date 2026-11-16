@@ -1,0 +1,249 @@
+<!doctype html>
+<!-- Autopilot Dashboard — customer-facing status panel. CRTC AI 2026-11-16 -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Business Autopilot — Dashboard</title>
+<meta name="theme-color" content="#050d17">
+<style>
+:root{color-scheme:dark;--bg:#050d17;--panel:#0d1f33;--panel2:#112a41;--ink:#f3f6fa;--muted:#aebdca;--gold:#f5c842;--lime:#00e676;--line:#26425a;--red:#ff4f4f;--max:1100px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{width:min(var(--max),calc(100% - 28px));margin:auto}
+header{background:#071321;border-bottom:1px solid var(--line);padding:0}
+.nav{min-height:60px;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-weight:900;letter-spacing:.12em;text-decoration:none}.brand span{color:var(--lime)}
+.biz-name{color:var(--gold);font-weight:700;font-size:.95rem}
+.stat-row{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:28px 0 0}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:18px 20px}
+.stat-val{font-size:2.4rem;font-weight:900;line-height:1;color:var(--gold)}
+.stat-label{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-top:4px}
+.stat-sub{font-size:.8rem;color:var(--lime);margin-top:2px}
+.section{padding:28px 0}
+h2{font-size:1.3rem;font-weight:800;margin:0 0 14px;letter-spacing:-.02em}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.card-head{padding:14px 20px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between}
+.card-head h3{margin:0;font-size:1rem}.tag{font-size:.75rem;padding:3px 9px;border-radius:999px;font-weight:700}
+.tag.ok{background:rgba(0,230,118,.15);color:var(--lime);border:1px solid rgba(0,230,118,.3)}
+.tag.warn{background:rgba(245,200,66,.15);color:var(--gold);border:1px solid rgba(245,200,66,.3)}
+.tag.off{background:rgba(255,79,79,.12);color:var(--red);border:1px solid rgba(255,79,79,.25)}
+table{width:100%;border-collapse:collapse}th{text-align:left;padding:9px 16px;font-size:.78rem;text-transform:uppercase;letter-spacing:.07em;color:var(--muted);border-bottom:1px solid var(--line)}
+td{padding:10px 16px;border-bottom:1px solid var(--line);font-size:.88rem}tr:last-child td{border-bottom:none}
+td.ok{color:var(--lime)}td.warn{color:var(--gold)}td.off{color:var(--red)}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.check-item{display:flex;align-items:center;gap:10px;padding:10px 20px;border-bottom:1px solid var(--line)}
+.check-item:last-child{border-bottom:none}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.dot.ok{background:var(--lime)}.dot.warn{background:var(--gold)}.dot.off{background:var(--red)}
+.check-label{font-size:.88rem;flex:1}.check-status{font-size:.78rem;color:var(--muted)}
+.msg-preview{padding:14px 20px;border-bottom:1px solid var(--line);font-size:.88rem}
+.msg-preview:last-child{border-bottom:none}
+.msg-meta{display:flex;justify-content:space-between;margin-bottom:4px}
+.msg-from{font-weight:700}.msg-time{color:var(--muted);font-size:.78rem}
+.msg-body{color:var(--muted)}.msg-body.reply{color:var(--ink)}
+.badge-new{display:inline-block;background:var(--gold);color:#1a1200;font-size:.7rem;font-weight:900;padding:1px 7px;border-radius:999px;margin-left:6px}
+footer{border-top:1px solid var(--line);padding:20px 0;color:var(--muted);font-size:.8rem}
+/* Login screen */
+.login-wrap{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+.login-box{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:32px;width:100%;max-width:400px}
+.login-box h1{font-size:1.6rem;margin:0 0 8px}.login-box p{color:var(--muted);margin:0 0 24px}
+label{display:block;font-weight:700;margin:12px 0 4px;font-size:.9rem}
+input{width:100%;padding:11px;border-radius:8px;border:1px solid var(--line);background:#071321;color:var(--ink);font:inherit}
+.btn{display:inline-flex;align-items:center;justify-content:center;min-height:44px;padding:10px 20px;border:1px solid var(--gold);border-radius:8px;background:var(--gold);color:#1a1200;text-decoration:none;font:inherit;font-weight:850;cursor:pointer;width:100%;margin-top:16px}
+.err{color:var(--red);font-size:.85rem;margin-top:8px}
+@media(max-width:700px){.stat-row{grid-template-columns:repeat(2,1fr)}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div id="login-screen" class="login-wrap">
+  <div class="login-box">
+    <h1>Business Autopilot</h1>
+    <p>Sign in to see your dashboard.</p>
+    <label for="pin-biz">Business name or account ID</label>
+    <input id="pin-biz" type="text" autocomplete="username" placeholder="e.g. Riverside Plumbing">
+    <label for="pin">Access PIN</label>
+    <input id="pin" type="password" autocomplete="current-password" placeholder="4-digit PIN">
+    <button class="btn" id="login-btn">Sign In</button>
+    <div class="err" id="login-err"></div>
+    <p style="margin-top:16px;font-size:.8rem;color:var(--muted)">Don't have a PIN? <a href="tel:+18437548988" style="color:var(--gold)">Call 843-754-8988</a></p>
+  </div>
+</div>
+
+<div id="dashboard" style="display:none">
+<header><div class="wrap nav">
+  <a class="brand" href="https://www.crtcai.com" aria-label="CRTCai">CRTC<span>AI</span></a>
+  <span class="biz-name" id="dash-biz-name"></span>
+  <button onclick="logout()" style="background:none;border:1px solid var(--line);border-radius:6px;color:var(--muted);padding:5px 12px;cursor:pointer;font-size:.82rem">Sign out</button>
+</div></header>
+
+<div class="wrap">
+
+<div class="stat-row" id="stat-row">
+  <div class="stat"><div class="stat-val" id="s-calls">—</div><div class="stat-label">Calls this month</div><div class="stat-sub" id="s-calls-sub"></div></div>
+  <div class="stat"><div class="stat-val" id="s-texts">—</div><div class="stat-label">Texts sent back</div><div class="stat-sub" id="s-texts-sub"></div></div>
+  <div class="stat"><div class="stat-val" id="s-replies">—</div><div class="stat-label">Replies received</div><div class="stat-sub" id="s-replies-sub"></div></div>
+  <div class="stat"><div class="stat-val" id="s-leads">—</div><div class="stat-label">AI leads captured</div><div class="stat-sub" id="s-leads-sub"></div></div>
+</div>
+
+<div class="section grid2">
+  <div>
+    <h2>Service status</h2>
+    <div class="card">
+      <div class="check-item"><div class="dot" id="dot-site"></div><span class="check-label">Website</span><span class="check-status" id="st-site">—</span></div>
+      <div class="check-item"><div class="dot" id="dot-cr"></div><span class="check-label">Call Rescue</span><span class="check-status" id="st-cr">—</span></div>
+      <div class="check-item"><div class="dot" id="dot-ai"></div><span class="check-label">AI Receptionist</span><span class="check-status" id="st-ai">—</span></div>
+      <div class="check-item"><div class="dot" id="dot-carrier"></div><span class="check-label">Carrier registration</span><span class="check-status" id="st-carrier">—</span></div>
+    </div>
+  </div>
+  <div>
+    <h2>Recent calls</h2>
+    <div class="card">
+      <table>
+        <tr><th>Time</th><th>Number</th><th>Text sent</th></tr>
+        <tbody id="calls-table"><tr><td colspan="3" style="color:var(--muted)">Loading…</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Recent AI replies <span id="new-badge"></span></h2>
+  <div class="card" id="replies-list">
+    <div class="msg-preview" style="color:var(--muted)">Loading…</div>
+  </div>
+</div>
+
+<div class="section">
+  <h2>Your account</h2>
+  <div class="card">
+    <table>
+      <tr><th>Item</th><th>Status</th><th>Next billing</th></tr>
+      <tbody id="acct-table"><tr><td colspan="3" style="color:var(--muted)">Loading…</td></tr></tbody>
+    </table>
+  </div>
+</div>
+
+</div><!-- .wrap -->
+<footer><div class="wrap">Business Autopilot by <a href="https://www.crtcai.com" style="color:var(--gold)">CRTCai</a> · Questions? <a href="tel:+18437548988" style="color:var(--gold)">843-754-8988</a> · <a href="mailto:haleclh@gmail.com" style="color:var(--muted)">haleclh@gmail.com</a></div></footer>
+</div><!-- #dashboard -->
+
+<script>
+// Demo data keyed by PIN — in production this hits /api/dashboard/:token
+var DEMO = {
+  "1234": {
+    biz: "Riverside Plumbing",
+    stats: { calls:47, callsSub:"↑12 vs last month", texts:31, textsSub:"66% connect rate", replies:18, repliesSub:"58% reply rate", leads:9, leadsSub:"est. $4,500 pipeline" },
+    status: { site:"ok", cr:"ok", ai:"ok", carrier:"ok" },
+    statusText: { site:"Live", cr:"Active", ai:"Active", carrier:"Approved" },
+    calls: [
+      {t:"Today 2:14pm",n:"(843) 555-0182",sent:"Yes"},
+      {t:"Today 11:08am",n:"(843) 555-0247",sent:"Yes"},
+      {t:"Yesterday 4:51pm",n:"Hidden number",sent:"No — blocked"},
+      {t:"Yesterday 1:33pm",n:"(843) 555-0109",sent:"Yes"},
+      {t:"Nov 15 9:22am",n:"(843) 555-0334",sent:"Yes"}
+    ],
+    replies: [
+      {from:"(843) 555-0182",time:"Today 2:17pm",body:"Hey thanks for the quick reply — do you do drain cleaning?",isNew:true,aiReply:"We do! For drain cleaning we're usually out within 24 hours. What's the address and best time to reach you?"},
+      {from:"(843) 555-0247",time:"Today 11:12am",body:"What do you charge for a water heater install?",isNew:true,aiReply:"Water heater installs run $450–$650 depending on the unit. Want me to have someone call you back with a firm quote?"},
+      {from:"(843) 555-0109",time:"Yesterday 1:38pm",body:"OK thanks will call back tomorrow",isNew:false,aiReply:null}
+    ],
+    acct: [
+      {item:"Business Autopilot — Monthly Care",status:"Active",next:"Dec 16, 2026"},
+      {item:"Setup balance",status:"Paid in full",next:"—"}
+    ]
+  },
+  "0000": {
+    biz: "Demo Account",
+    stats: { calls:12, callsSub:"this month", texts:9, textsSub:"75% connect rate", replies:4, repliesSub:"44% reply rate", leads:2, leadsSub:"est. $800 pipeline" },
+    status: { site:"warn", cr:"ok", ai:"warn", carrier:"warn" },
+    statusText: { site:"Setup in progress", cr:"Active", ai:"Training", carrier:"Pending (1–2 wks)" },
+    calls: [
+      {t:"Today 10:04am",n:"(843) 555-0001",sent:"Yes"},
+      {t:"Yesterday 3:30pm",n:"(843) 555-0002",sent:"Yes"}
+    ],
+    replies: [
+      {from:"(843) 555-0001",time:"Today 10:07am",body:"Hi is this the plumber?",isNew:true,aiReply:"Hi! You reached Demo Business. What can we help you with?"}
+    ],
+    acct: [
+      {item:"Business Autopilot — Monthly Care",status:"Starts at handoff",next:"TBD"},
+      {item:"Setup — balance remaining",status:"Due at handoff",next:"—"}
+    ]
+  }
+};
+
+var currentData = null;
+
+document.getElementById("login-btn").addEventListener("click", doLogin);
+document.getElementById("pin").addEventListener("keydown", function(e){ if(e.key==="Enter") doLogin(); });
+
+function doLogin(){
+  var pin = document.getElementById("pin").value.trim();
+  var data = DEMO[pin];
+  if(!data){ document.getElementById("login-err").textContent = "PIN not found. Call 843-754-8988 if you need access."; return; }
+  currentData = data;
+  localStorage.setItem("ap_pin", pin);
+  showDash(data);
+}
+
+function logout(){
+  localStorage.removeItem("ap_pin");
+  document.getElementById("dashboard").style.display="none";
+  document.getElementById("login-screen").style.display="flex";
+  document.getElementById("pin").value="";
+  document.getElementById("login-err").textContent="";
+}
+
+function showDash(d){
+  document.getElementById("login-screen").style.display="none";
+  document.getElementById("dashboard").style.display="block";
+  document.getElementById("dash-biz-name").textContent = d.biz;
+
+  // Stats
+  document.getElementById("s-calls").textContent = d.stats.calls;
+  document.getElementById("s-calls-sub").textContent = d.stats.callsSub;
+  document.getElementById("s-texts").textContent = d.stats.texts;
+  document.getElementById("s-texts-sub").textContent = d.stats.textsSub;
+  document.getElementById("s-replies").textContent = d.stats.replies;
+  document.getElementById("s-replies-sub").textContent = d.stats.repliesSub;
+  document.getElementById("s-leads").textContent = d.stats.leads;
+  document.getElementById("s-leads-sub").textContent = d.stats.leadsSub;
+
+  // Status dots
+  ["site","cr","ai","carrier"].forEach(function(k){
+    var dot = document.getElementById("dot-"+k);
+    var st = document.getElementById("st-"+k);
+    dot.className = "dot " + d.status[k];
+    st.textContent = d.statusText[k];
+  });
+
+  // Calls table
+  var tb = document.getElementById("calls-table");
+  tb.innerHTML = d.calls.map(function(c){
+    return "<tr><td>"+c.t+"</td><td>"+c.n+"</td><td class='"+(c.sent==="Yes"?"ok":"warn")+"'>"+c.sent+"</td></tr>";
+  }).join("");
+
+  // Replies
+  var rl = document.getElementById("replies-list");
+  var newCount = d.replies.filter(function(r){return r.isNew;}).length;
+  if(newCount > 0) document.getElementById("new-badge").innerHTML = "<span class='badge-new'>"+newCount+" new</span>";
+  rl.innerHTML = d.replies.map(function(r){
+    var html = "<div class='msg-preview'><div class='msg-meta'><span class='msg-from'>"+r.from+(r.isNew?"<span class='badge-new'>NEW</span>":"")+"</span><span class='msg-time'>"+r.time+"</span></div>";
+    html += "<div class='msg-body reply'>"+r.body+"</div>";
+    if(r.aiReply) html += "<div class='msg-body' style='margin-top:6px;padding:8px 10px;background:#071321;border-radius:6px;border-left:3px solid var(--lime)'><span style='font-size:.75rem;color:var(--lime);font-weight:700'>AI REPLY · </span>"+r.aiReply+"</div>";
+    html += "</div>";
+    return html;
+  }).join("");
+
+  // Account
+  var at = document.getElementById("acct-table");
+  at.innerHTML = d.acct.map(function(a){
+    return "<tr><td>"+a.item+"</td><td class='ok'>"+a.status+"</td><td>"+a.next+"</td></tr>";
+  }).join("");
+}
+
+// Auto-login from saved PIN
+var saved = localStorage.getItem("ap_pin");
+if(saved && DEMO[saved]){ currentData=DEMO[saved]; showDash(DEMO[saved]); }
+</script>
+</body>
+</html>
